@@ -4,7 +4,6 @@
  * Install and uninstall functions for the Resave Nodes module.
  */
 
-
 /**
  * Implements hook_uninstall().
  */
