@@ -8,7 +8,7 @@
  * Implements hook_uninstall().
  */
 function resave_nodes_uninstall() {
-  variable_del('resave_nodes_last_run');
-  variable_del('resave_nodes_all_nodes');
   variable_del('resave_nodes_selected_types');
+  variable_del('resave_nodes_all_nodes');
+  variable_del('resave_nodes_last_run');
 }

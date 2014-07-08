@@ -1,6 +1,6 @@
 name = Resave Nodes
 description = Resave nodes to force field computation via cron.
-core = 7.x
 package = Other
+core = 7.x
 
 configure = admin/config/system/resave_nodes
