@@ -63,17 +63,27 @@ function resave_nodes_cron() {
   $current_time = time();
 
   $resave_nodes_selected_types = variable_get('resave_nodes_selected_types', array());
+  $resave_nodes_all_nodes = variable_get('resave_nodes_all_nodes', array());
 
   $num_nodes_saved = 0;
   if (isset($resave_nodes_selected_types)) {
     foreach ($resave_nodes_selected_types as $key => $value) {
       if ($value != '0') {
-        $query = db_query('SELECT nid FROM {node} WHERE changed >= :last_cron_run AND type = :content_type',
-          array(
-            ":last_cron_run" => $resave_nodes_last_run,
-            ":content_type"  => $value,
-          )
-        );
+
+        if (isset($resave_nodes_all_nodes)) {
+          $query = db_query('SELECT nid FROM {node} WHERE type = :content_type',
+            array(
+              ":content_type"  => $value,
+            )
+          );
+        } else {
+          $query = db_query('SELECT nid FROM {node} WHERE changed >= :last_cron_run AND type = :content_type',
+            array(
+              ":last_cron_run" => $resave_nodes_last_run,
+              ":content_type"  => $value,
+            )
+          );
+        }
 
         $num_nodes_saved = 0;
         foreach ($query as $result) {
@@ -119,25 +129,38 @@ function resave_nodes_form($form, &$form_state) {
   }
 
   $resave_nodes_selected_types = variable_get('resave_nodes_selected_types');
+  $resave_nodes_all_nodes = variable_get('resave_nodes_all_nodes');
 
   $form['description'] = array(
     '#type' => 'item',
-    '#description' => t('Select the content types of nodes to resave when
-      cron is run. This only affects nodes that have been created or changed
-      since the last cron run.'),
+    '#description' => t('Here you can select the content types of nodes to
+      resave and whether to resave all nodes (regardless of creation/change
+      time) when cron is run.'),
   );
 
   $form['content_types'] = array(
-    '#title' => t('Content Types'),
-    '#type' => 'checkboxes',
+    '#title'   => t('Content Types'),
+    '#type'    => 'checkboxes',
     '#options' => $content_types,
   );
   if (isset($resave_nodes_selected_types)) {
     $form['content_types']['#default_value'] = $resave_nodes_selected_types;
   }
 
+  $form['resave_all_nodes'] = array(
+    '#title'         => t('Resave All Nodes'),
+    '#type'          => 'checkboxes',
+    '#options'       => array(
+      'save_all_nodes' => t('Resave all nodes of the selected content types
+        regardless of creation/change time.'),
+    ),
+  );
+  if (isset($resave_nodes_all_nodes)) {
+    $form['resave_all_nodes']['#default_value'] = $resave_nodes_all_nodes;
+  }
+
   $form['submit'] = array(
-    '#type' => 'submit',
+    '#type'  => 'submit',
     '#value' => 'Save Configuration',
   );
 
@@ -150,15 +173,18 @@ function resave_nodes_form($form, &$form_state) {
  */
 function resave_nodes_form_submit($form, &$form_state) {
   variable_set('resave_nodes_selected_types', $form_state['values']['content_types']);
+  variable_set('resave_nodes_all_nodes', $form_state['values']['resave_all_nodes']);
   drupal_set_message(t('The configuration has been saved.'));
+
+  $config['content_types'] = $form_state['values']['content_types'];
+  $config['resave_all_nodes'] = $form_state['values']['resave_all_nodes'];
 
   watchdog(
     'resave_nodes',
-    'The following content types have been configured for resaving: <pre>@ctypes</pre>',
+    '"Resave Nodes" configuration has been updated: <pre>@config</pre>',
     array(
-      '@ctypes'  => print_r($form_state['values']['content_types'], TRUE),
+      '@config'  => print_r($config, TRUE),
     ),
     WATCHDOG_INFO
   );
-
 }

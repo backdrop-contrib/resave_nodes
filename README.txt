@@ -11,8 +11,9 @@ CONTENTS OF THIS FILE
 Introduction
 ------------
 The Resave Nodes module allows for the automatic resaving of nodes when
-cron runs.  Only nodes of selected content types that have been created or
-changed after the last time cron runs will be resaved.
+cron runs.  The nodes that are resaved can be either the ones that have
+been created or changed since the last time cron ran or it can be all
+nodes.  It can also be restricted to nodes of selected content types.
 
 Why do this?  Consider the issue discussed here:
 
@@ -26,10 +27,10 @@ imported automatically on a recurring schedule, manually resaving
 individual nodes or using the Views Bulk Operations module to manually bulk
 save nodes is not a realistic option.  Enter this module.
 
-Upon installation, configure the desired content types to monitor.  Then,
-whenever a node of that content type is created or changed, the next time
-cron is run, that node will be resaved, forcing the computing of that
-special field.
+Upon installation, configure the desired content types to monitor and
+whether or not to do only those nodes that have been recently
+created/changed.  Then, the next time cron is run, nodes of that content
+type will be resaved, forcing the computing of that special field.
 
 
 Requirements
@@ -46,9 +47,8 @@ for further information.
 
 Configuration
 -------------
-The content types to monitor are configured under
-'Configuration > System > Resave Nodes' or by going to
-The stats can be viewed under 'Store > Cart Statistics' or by going to
+The content types to monitor and whether to do all nodes are configured
+under 'Configuration > System > Resave Nodes' or by going to
 /admin/config/system/resave_nodes.
 
 
