@@ -75,10 +75,10 @@ function resave_nodes_form($form, &$form_state) {
   $resave_nodes_selected_types = variable_get('resave_nodes_selected_types');
   $resave_nodes_all_nodes = variable_get('resave_nodes_all_nodes');
 
-  $form['description'] = array(
-    '#type' => 'item',
-    '#description' => t('Description'),
-  );
+  // $form['description'] = array(
+  //   '#type' => 'item',
+  //   '#description' => t('Description'),
+  // );
 
   $form['content_types'] = array(
     '#title'   => t('Content Types'),
