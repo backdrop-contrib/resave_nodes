@@ -113,6 +113,12 @@ function resave_nodes_form($form, &$form_state) {
     '#value' => 'Save Configuration',
   );
 
+  $form['run_now'] = array(
+    '#type' => 'submit',
+    '#value' => t('Resave Nodes Now'),
+    '#submit' => array('resave_nodes_run_now_submit'),
+  );
+
   return $form;
 }
 

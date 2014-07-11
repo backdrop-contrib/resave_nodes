@@ -9,6 +9,15 @@
  */
 
 /**
+ * Submit handler for the 'run now' button on the config page.
+ */
+function resave_nodes_run_now_submit() {
+  resave_nodes_do_that_thing();
+  drupal_set_message(t('Resaving nodes complete.'));
+}
+
+
+/**
  * The 'business logic' for resaving the nodes.  This resided in
  * hook_cron() in the past.  It's been pulled out into its own file to
  * allow the creation of more refined run options.
