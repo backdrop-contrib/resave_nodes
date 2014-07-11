@@ -12,8 +12,13 @@
  * Submit handler for the 'run now' button on the config page.
  */
 function resave_nodes_run_now_submit() {
-  resave_nodes_do_that_thing();
-  drupal_set_message(t('Resaving nodes complete.'));
+  $results = resave_nodes_do_that_thing();
+  drupal_set_message(t('Resaving nodes complete. @nodes nodes updated in @sec seconds.',
+    array(
+      '@nodes' => $results['number_updated'],
+      '@sec'   => $results['run_time'],
+    )
+  ));
 }
 
 
@@ -84,4 +89,9 @@ function resave_nodes_do_that_thing() {
     WATCHDOG_INFO
   );
   variable_set('resave_nodes_last_run', $start_time + $time_delta);
+
+  return array(
+    'number_updated' => $total_num_nodes_saved,
+    'run_time'       => $time_delta,
+  );
 }
