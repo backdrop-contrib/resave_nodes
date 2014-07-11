@@ -5,6 +5,20 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function resave_nodes_install() {
+  // Setting this variable here prevents this module from attempting to
+  // resave all nodes the first time it's run.
+  variable_set('resave_nodes_last_run', time());
+
+  // By default we only resave those nodes that have been created/changed
+  // since the last running of this module.
+  // variable_set('resave_nodes_all_nodes', array('resave_all_nodes' => '0'));
+}
+
+
+/**
  * Implements hook_uninstall().
  */
 function resave_nodes_uninstall() {

@@ -1,5 +1,5 @@
 name = Resave Nodes
-description = Resave nodes to force field computation via cron.
+description = Automatically resave nodes to force field computation.
 package = Other
 core = 7.x
 

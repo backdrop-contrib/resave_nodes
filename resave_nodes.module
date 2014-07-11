@@ -3,10 +3,14 @@
  * @file
  * Main section for the Resave Nodes module.
  *
- * This module will resave nodes that have been created/updated since the
- * last time cron was run, forcing computed fields to be computed
+ * This module will resave nodes of selected content types based on various
+ * rules (created/updated since last time cron was run, or just all nodes
+ * regardless of create/update time) at configured times (via cron or
+ * multiple times of day).  This will force computed fields to be computed
  * (geolocation, media players, etc.).
  */
+
+require_once('resave_nodes.logic.inc');
 
 /**
  * Implements hook_help().
@@ -28,7 +32,7 @@ function resave_nodes_help($path, $arg) {
 function resave_nodes_menu() {
   $items['admin/config/system/resave_nodes'] = array(
     'title'            => 'Resave Nodes',
-    'description'      => 'Configure the content types to resave via cron.',
+    'description'      => t('Configure the content types and frequency for resaving nodes.'),
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('resave_nodes_form'),
     'access arguments' => array('administer node resaving'),
@@ -44,7 +48,7 @@ function resave_nodes_menu() {
 function resave_nodes_permission() {
   return array(
     'administer node resaving' => array(
-      'title' => t('Administer the periodic resaving of nodes via cron.'),
+      'title' => t('Administer the content types and frequency for resaving nodes.'),
     ),
   );
 }
@@ -54,67 +58,7 @@ function resave_nodes_permission() {
  * Implements hook_cron().
  */
 function resave_nodes_cron() {
-  $resave_nodes_last_run = variable_get('resave_nodes_last_run');
-  if (!isset($resave_nodes_last_run)) {
-    $resave_nodes_last_run = variable_get('cron_last');
-    watchdog('resave_nodes', '"resave_nodes_last_run" not set yet. Using "cron_last".', array(), WATCHDOG_INFO);
-  }
-
-  $current_time = time();
-
-  $resave_nodes_selected_types = variable_get('resave_nodes_selected_types', array());
-  $resave_nodes_all_nodes = variable_get('resave_nodes_all_nodes', array());
-
-  $num_nodes_saved = 0;
-  if (isset($resave_nodes_selected_types)) {
-    foreach ($resave_nodes_selected_types as $key => $value) {
-      if ($value != '0') {
-
-        if (isset($resave_nodes_all_nodes)) {
-          $query = db_query('SELECT nid FROM {node} WHERE type = :content_type',
-            array(
-              ":content_type"  => $value,
-            )
-          );
-        } else {
-          $query = db_query('SELECT nid FROM {node} WHERE changed >= :last_cron_run AND type = :content_type',
-            array(
-              ":last_cron_run" => $resave_nodes_last_run,
-              ":content_type"  => $value,
-            )
-          );
-        }
-
-        $num_nodes_saved = 0;
-        foreach ($query as $result) {
-          $node = node_load($result->nid);
-          node_save($node);
-          watchdog(
-            'resave_nodes',
-            'Resaving node "@res" of content type "@ctype"',
-            array(
-              '@res'   => print_r($node->title, TRUE),
-              '@ctype' => print_r($value, TRUE),
-            ),
-            WATCHDOG_INFO
-          );
-          $num_nodes_saved += 1;
-        }
-      }
-    }
-  }
-
-  $current_time = time();
-  watchdog(
-    'resave_nodes',
-    'Finished updating @num new/changed nodes: @time',
-    array(
-      '@num'  => print_r($num_nodes_saved, TRUE),
-      '@time' => print_r($current_time, TRUE),
-    ),
-    WATCHDOG_INFO
-  );
-  variable_set('resave_nodes_last_run', $current_time);
+  resave_nodes_do_that_thing();
 }
 
 
@@ -133,15 +77,16 @@ function resave_nodes_form($form, &$form_state) {
 
   $form['description'] = array(
     '#type' => 'item',
-    '#description' => t('Here you can select the content types of nodes to
-      resave and whether to resave all nodes (regardless of creation/change
-      time) when cron is run.'),
+    '#description' => t('Description'),
   );
 
   $form['content_types'] = array(
     '#title'   => t('Content Types'),
     '#type'    => 'checkboxes',
     '#options' => $content_types,
+    '#description' => t('By default, Resave Nodes is not configured to save
+      anything.  You must first select which content types you would like
+      periodically saved.'),
   );
   if (isset($resave_nodes_selected_types)) {
     $form['content_types']['#default_value'] = $resave_nodes_selected_types;
@@ -151,9 +96,13 @@ function resave_nodes_form($form, &$form_state) {
     '#title'         => t('Resave All Nodes'),
     '#type'          => 'checkboxes',
     '#options'       => array(
-      'save_all_nodes' => t('Resave all nodes of the selected content types
+      'resave_all_nodes' => t('Resave all nodes of the selected content types
         regardless of creation/change time.'),
     ),
+    '#description' => t('By default, Resave Nodes will only resave nodes
+      that have been created/changed since the last time it ran.  Selecting
+      this option will cause all nodes of the selected content types to be
+      resaved regardless of their creation/change times.'),
   );
   if (isset($resave_nodes_all_nodes)) {
     $form['resave_all_nodes']['#default_value'] = $resave_nodes_all_nodes;
@@ -177,12 +126,13 @@ function resave_nodes_form_submit($form, &$form_state) {
 
   drupal_set_message(t('The configuration has been saved.'));
 
-  $config['content_types'] = $form_state['values']['content_types'];
-  $config['resave_all_nodes'] = $form_state['values']['resave_all_nodes'];
+  $config['content_types']         = $form_state['values']['content_types'];
+  $config['resave_all_nodes']      = $form_state['values']['resave_all_nodes'];
+  $config['resave_nodes_last_run'] = variable_get('resave_nodes_last_run');
 
   watchdog(
     'resave_nodes',
-    '"Resave Nodes" configuration has been updated: <pre>@config</pre>',
+    'Configuration has been updated: <pre>@config</pre>',
     array(
       '@config'  => print_r($config, TRUE),
     ),
