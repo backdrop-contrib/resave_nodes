@@ -58,7 +58,11 @@ function resave_nodes_permission() {
  * Implements hook_cron().
  */
 function resave_nodes_cron() {
-  resave_nodes_do_that_thing();
+  $resave_nodes_scheduling = variable_get('resave_nodes_use_cron');
+
+  if ($resave_nodes_scheduling == 'run_with_cron') {
+    resave_nodes_do_that_thing();
+  }
 }
 
 
@@ -73,31 +77,34 @@ function resave_nodes_form($form, &$form_state) {
   }
 
   $resave_nodes_selected_types = variable_get('resave_nodes_selected_types');
-  $resave_nodes_all_nodes = variable_get('resave_nodes_all_nodes');
+  $resave_nodes_all_nodes      = variable_get('resave_nodes_all_nodes');
+  $resave_nodes_scheduling     = variable_get('resave_nodes_use_cron');
 
-  // $form['description'] = array(
-  //   '#type' => 'item',
-  //   '#description' => t('Description'),
-  // );
+  $form['content'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Content Selection'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
 
-  $form['content_types'] = array(
-    '#title'   => t('Content Types'),
-    '#type'    => 'checkboxes',
-    '#options' => $content_types,
+  $form['content']['content_types'] = array(
+    '#title'       => t('Content Types'),
+    '#type'        => 'checkboxes',
+    '#options'     => $content_types,
     '#description' => t('By default, Resave Nodes is not configured to save
       anything.  You must first select which content types you would like
       periodically saved.'),
   );
   if (isset($resave_nodes_selected_types)) {
-    $form['content_types']['#default_value'] = $resave_nodes_selected_types;
+    $form['content']['content_types']['#default_value'] = $resave_nodes_selected_types;
   }
 
-  $form['resave_all_nodes'] = array(
+  $form['content']['resave_all_nodes'] = array(
     '#title'         => t('Resave All Nodes'),
     '#type'          => 'checkboxes',
     '#options'       => array(
-      'resave_all_nodes' => t('Resave all nodes of the selected content types
-        regardless of creation/change time.'),
+    'resave_all_nodes' => t('Resave all nodes of the selected content types
+      regardless of creation/change time.'),
     ),
     '#description' => t('By default, Resave Nodes will only resave nodes
       that have been created/changed since the last time it ran.  Selecting
@@ -105,8 +112,99 @@ function resave_nodes_form($form, &$form_state) {
       resaved regardless of their creation/change times.'),
   );
   if (isset($resave_nodes_all_nodes)) {
-    $form['resave_all_nodes']['#default_value'] = $resave_nodes_all_nodes;
+    $form['content']['resave_all_nodes']['#default_value'] = $resave_nodes_all_nodes;
   }
+
+  $form['scheduling'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Scheduling'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+
+  $form['scheduling']['use_cron'] = array(
+    '#title'    => t('Resave nodes using...'),
+    '#type'     => 'radios',
+    '#required' => TRUE,
+    '#options'  => array(
+      'run_with_cron'      => t('Drupal Cron'),
+      'run_with_scheduler' => t('Unix-style Cron'),
+    ),
+    '#default_value' => $resave_nodes_scheduling,
+  );
+
+  $form['scheduling']['unix_cron'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Unix-style Cron Configuration'),
+    '#description' => t('Use standard Unix-style cron to configure when and how
+      often nodes are resaved.  These settings take effect only if "Unix-style
+      cron" is selected above.'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
+  );
+
+  // Next comes a long section where we pull the defaults for the unix-style
+  // crontab settings and then fill in the appropriate fields.
+  $resave_nodes_unix_cron_min       = variable_get('resave_nodes_unix_cron_min');
+  $resave_nodes_unix_cron_hour      = variable_get('resave_nodes_unix_cron_hour');
+  $resave_nodes_unix_cron_day_month = variable_get('resave_nodes_unix_cron_day_month');
+  $resave_nodes_unix_cron_month     = variable_get('resave_nodes_unix_cron_month');
+  $resave_nodes_unix_cron_day_week  = variable_get('resave_nodes_unix_cron_day_week');
+
+  $form['scheduling']['unix_cron']['min'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Minutes'),
+    '#description'   => t('Enter a specific minute between 0 and 59, "*" for
+      every minute, or comma separate multiple minutes (e.g. "0,30" for every
+      30 minutes).'),
+    '#size'          => 20,
+    '#maxlength'     => 20,
+    '#default_value' => $resave_nodes_unix_cron_min,
+  );
+
+  $form['scheduling']['unix_cron']['hour'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Hour'),
+    '#description'   => t('Enter a specific hour between 0 and 23, "*" for every
+      hour, or comma separate multiple hours (e.g. "0,6,12,18" for every 6
+      hours).'),
+    '#size'          => 20,
+    '#maxlength'     => 20,
+    '#default_value' => $resave_nodes_unix_cron_hour,
+  );
+
+  $form['scheduling']['unix_cron']['day_month'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Day of the Month'),
+    '#description'   => t('Enter a specific day between 1 and 31, "*" for every
+      day of the month, or comma separate multiple days of the month (e.g.
+      "1,10,20" for the 1st, 10th, and 20th day of the month).'),
+    '#size'          => 20,
+    '#maxlength'     => 20,
+    '#default_value' => $resave_nodes_unix_cron_day_month,
+  );
+
+  $form['scheduling']['unix_cron']['month'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Month'),
+    '#description'   => t('Enter a specific month between 1 and 12, "*" for
+      every month, or comma separate multiple months (e.g. "1,6,11" for January,
+      June, and November).'),
+    '#size'          => 20,
+    '#maxlength'     => 20,
+    '#default_value' => $resave_nodes_unix_cron_month,
+  );
+
+  $form['scheduling']['unix_cron']['day_week'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Day of the week'),
+    '#description'   => t('Enter a specific day of the week between 0 and 6, "*"
+      for every day of the week, or comma/dash separate multiple days (e.g.
+      "1-5" for Monday through Friday).'),
+    '#size'          => 20,
+    '#maxlength'     => 20,
+    '#default_value' => $resave_nodes_unix_cron_day_week,
+  );
 
   $form['submit'] = array(
     '#type'  => 'submit',
@@ -129,9 +227,17 @@ function resave_nodes_form($form, &$form_state) {
 function resave_nodes_form_submit($form, &$form_state) {
   variable_set('resave_nodes_selected_types', $form_state['values']['content_types']);
   variable_set('resave_nodes_all_nodes', $form_state['values']['resave_all_nodes']);
+  variable_set('resave_nodes_use_cron', $form_state['values']['use_cron']);
+
+  variable_set('resave_nodes_unix_cron_min', $form_state['values']['min']);
+  variable_set('resave_nodes_unix_cron_hour', $form_state['values']['hour']);
+  variable_set('resave_nodes_unix_cron_day_month', $form_state['values']['day_month']);
+  variable_set('resave_nodes_unix_cron_month', $form_state['values']['month']);
+  variable_set('resave_nodes_unix_cron_day_week', $form_state['values']['day_week']);
 
   drupal_set_message(t('The configuration has been saved.'));
 
+  $config['use_cron']              = $form_state['values']['use_cron'];
   $config['content_types']         = $form_state['values']['content_types'];
   $config['resave_all_nodes']      = $form_state['values']['resave_all_nodes'];
   $config['resave_nodes_last_run'] = variable_get('resave_nodes_last_run');

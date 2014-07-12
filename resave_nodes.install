@@ -8,9 +8,22 @@
  * Implements hook_install().
  */
 function resave_nodes_install() {
-  // Setting this variable here prevents this module from attempting to
-  // resave all nodes the first time it's run.
+  // Setting this variable prevents this module from attempting to resave all
+  // nodes the first time it's run.
   variable_set('resave_nodes_last_run', time());
+
+  // Setting this variable makes this module use cron to resave the nodes.
+  variable_set('resave_nodes_use_cron', 'run_with_cron');
+
+  // The following settings are defaults for the 'Unix-style cron' scheduling
+  // option.  They only take effect when 'Unix-style cron' scheduling is
+  // selected on the configuration page.
+  // This default is for once a day at midnight.
+  variable_set('resave_nodes_unix_cron_min', '0');
+  variable_set('resave_nodes_unix_cron_hour', '0');
+  variable_set('resave_nodes_unix_cron_day_month', '*');
+  variable_set('resave_nodes_unix_cron_month', '*');
+  variable_set('resave_nodes_unix_cron_day_week', '*');
 }
 
 
@@ -18,7 +31,14 @@ function resave_nodes_install() {
  * Implements hook_uninstall().
  */
 function resave_nodes_uninstall() {
+  variable_del('resave_nodes_unix_cron_min');
+  variable_del('resave_nodes_unix_cron_hour');
+  variable_del('resave_nodes_unix_cron_day_month');
+  variable_del('resave_nodes_unix_cron_month');
+  variable_del('resave_nodes_unix_cron_day_week');
+
   variable_del('resave_nodes_selected_types');
   variable_del('resave_nodes_all_nodes');
+  variable_del('resave_nodes_use_cron');
   variable_del('resave_nodes_last_run');
 }
