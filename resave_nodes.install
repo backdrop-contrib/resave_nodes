@@ -19,7 +19,7 @@ function resave_nodes_install() {
   // option.  They only take effect when 'Unix-style cron' scheduling is
   // selected on the configuration page.
   // This default is for once a day at midnight.
-  variable_set('resave_nodes_unix_cron_min', '0');
+  variable_set('resave_nodes_unix_cron_min', '*');
   variable_set('resave_nodes_unix_cron_hour', '0');
   variable_set('resave_nodes_unix_cron_day_month', '*');
   variable_set('resave_nodes_unix_cron_month', '*');

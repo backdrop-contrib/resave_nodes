@@ -10,10 +10,13 @@ CONTENTS OF THIS FILE
 
 Introduction
 ------------
-The Resave Nodes module allows for the automatic resaving of nodes when
-cron runs.  The nodes that are resaved can be either the ones that have
-been created or changed since the last time cron ran or it can be all
-nodes.  It can also be restricted to nodes of selected content types.
+The Resave Nodes module allows for the automatic resaving of nodes.  The
+resaving of nodes can be handled automatically through Drupal's cron
+functionality or it can be managed with a Unix-style cron configuration. The
+nodes that are resaved can be either the ones that have been created or changed
+since the last time the module ran (via one of the two cron options) ran or it
+can be all nodes regardless of created/change date.  It can also be restricted
+to nodes of selected content types.
 
 Why do this?  Consider the issue discussed here:
 
@@ -29,13 +32,15 @@ save nodes is not a realistic option.  Enter this module.
 
 Upon installation, configure the desired content types to monitor and
 whether or not to do only those nodes that have been recently
-created/changed.  Then, the next time cron is run, nodes of that content
+created/changed.  Then, select the preferred cron option (via Drupal or using
+the Job Scheduler module).  The next time cron is run, nodes of that content
 type will be resaved, forcing the computing of that special field.
 
 
 Requirements
 ------------
-There are no external requirements for this module.
+The Job Scheduler module is required.
+https://www.drupal.org/project/job_scheduler
 
 
 Installation
@@ -47,9 +52,15 @@ for further information.
 
 Configuration
 -------------
-The content types to monitor and whether to do all nodes are configured
-under 'Configuration > System > Resave Nodes' or by going to
-/admin/config/system/resave_nodes.
+There are three main configuration options accessible under
+'Configuration > System > Resave Nodes' or by going to
+/admin/config/system/resave_nodes:
+
+* Content type(s) to limit which nodes are resaved.
+* Whether to go with the default "resave only created/changed nodes" or to
+  resave all nodes regardless of created/changed time.
+* Schedule the resaving of nodes via Drupal's cron utility or with the
+  Unix-style crontab available from the Job Scheduler.
 
 
 Permissions
