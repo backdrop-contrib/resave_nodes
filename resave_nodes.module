@@ -182,17 +182,12 @@ function resave_nodes_form($form, &$form_state) {
   $resave_nodes_unix_cron_day_week  = variable_get('resave_nodes_unix_cron_day_week');
 
   $form['scheduling']['unix_cron']['min'] = array(
-      // '#type'          => 'textfield',
       '#type'          => 'item',
       '#title'         => t('Minutes'),
-      // '#attributes'    => array('readonly' => 'readonly'),
       '#description'   => t('The minimum possible time interval for either cron
         option is 1 hour (as dictated by Drupal\'s cron\'s minimum time
         interval).  Thus, minute-based resolution is not available.  This field
         has been hardcoded to run as "*".'),
-      // '#size'          => 20,
-      // '#maxlength'     => 20,
-      // '#default_value' => $resave_nodes_unix_cron_min,
   );
 
   $form['scheduling']['unix_cron']['hour'] = array(
