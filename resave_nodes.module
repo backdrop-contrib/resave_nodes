@@ -271,7 +271,7 @@ function resave_nodes_form_submit($form, &$form_state) {
 
   $job = array(
     'type'     => 'resave_nodes',
-    'id'       => 14,
+    'id'       => variable_get('resave_nodes_unix_cron_job_id'),
     'periodic' => TRUE,
     'crontab'  => $crontab,
   );
