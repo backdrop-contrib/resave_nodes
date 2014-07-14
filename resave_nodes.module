@@ -17,13 +17,15 @@ require_once('resave_nodes.logic.inc');
  */
 function resave_nodes_help($path, $arg) {
   if ($path == 'admin/help#resave_nodes') {
-    return t('The Resave Nodes module allows for the automatic resaving of
+    return t('<p>The Resave Nodes module allows for the automatic resaving of
       nodes.  The resaving of nodes can be handled automatically through
       Drupal\'s cron functionality or it can be managed with a Unix-style cron
       configuration. The nodes that are resaved can be either the ones that have
       been created or changed since the last time the module ran (via one of the
-      two cron options) ran or it can be all nodes regardless of created/change
-      date.  It can also be restricted to nodes of selected content types.');
+      two cron options) or it can be all nodes regardless of created/change
+      date.  It can also be restricted to nodes of selected content types.</p>
+      <p>If the Unix-style cron is required, be sure to set cron to run every
+      1 hour under \'Configuration > System > Cron\'.</p>');
   }
 }
 
@@ -165,8 +167,8 @@ function resave_nodes_form($form, &$form_state) {
       and, in turn, the Job Scheduler module relies on Drupal\'s cron.  This
       means that the minimum time interval available to this module is dictated
       by the time interval configured for this installation\'s cron.  Because
-      that minimum interval is 1 hour, this module\'s available minimum interval
-      is also 1 hour.'),
+      the smallest potential interval is 1 hour, this module\'s available
+      smallest potential interval is also 1 hour.'),
     '#collapsible' => TRUE,
     '#collapsed'   => TRUE,
   );
@@ -180,16 +182,17 @@ function resave_nodes_form($form, &$form_state) {
   $resave_nodes_unix_cron_day_week  = variable_get('resave_nodes_unix_cron_day_week');
 
   $form['scheduling']['unix_cron']['min'] = array(
-      '#type'          => 'textfield',
+      // '#type'          => 'textfield',
+      '#type'          => 'item',
       '#title'         => t('Minutes'),
-      '#attributes'    => array('readonly' => 'readonly'),
+      // '#attributes'    => array('readonly' => 'readonly'),
       '#description'   => t('The minimum possible time interval for either cron
         option is 1 hour (as dictated by Drupal\'s cron\'s minimum time
         interval).  Thus, minute-based resolution is not available.  This field
-        is hardcoded to run as "*".'),
-      '#size'          => 20,
-      '#maxlength'     => 20,
-      '#default_value' => $resave_nodes_unix_cron_min,
+        has been hardcoded to run as "*".'),
+      // '#size'          => 20,
+      // '#maxlength'     => 20,
+      // '#default_value' => $resave_nodes_unix_cron_min,
   );
 
   $form['scheduling']['unix_cron']['hour'] = array(
@@ -259,14 +262,15 @@ function resave_nodes_form_submit($form, &$form_state) {
   variable_set('resave_nodes_all_nodes', $form_state['values']['resave_all_nodes']);
   variable_set('resave_nodes_use_cron', $form_state['values']['use_cron']);
 
-  // variable_set('resave_nodes_unix_cron_min', $form_state['values']['min']);
+  variable_set('resave_nodes_unix_cron_min', '*');
   variable_set('resave_nodes_unix_cron_hour', $form_state['values']['hour']);
   variable_set('resave_nodes_unix_cron_day_month', $form_state['values']['day_month']);
   variable_set('resave_nodes_unix_cron_month', $form_state['values']['month']);
   variable_set('resave_nodes_unix_cron_day_week', $form_state['values']['day_week']);
 
   // Create the job data structure to either schedule or delete the job.
-  $crontab = $form_state['values']['min'] . ' ' . $form_state['values']['hour'] . ' ' .
+  $hard_coded_minutes = variable_get('resave_nodes_unix_cron_min');
+  $crontab = $hard_coded_minutes . ' ' . $form_state['values']['hour'] . ' ' .
     $form_state['values']['day_month'] . ' ' . $form_state['values']['month'] . ' ' .
     $form_state['values']['day_week'];
 
@@ -288,17 +292,21 @@ function resave_nodes_form_submit($form, &$form_state) {
 
   drupal_set_message(t('The configuration has been saved.'));
 
-  $config['content_types']         = $form_state['values']['content_types'];
-  $config['resave_all_nodes']      = $form_state['values']['resave_all_nodes'];
-  $config['resave_nodes_last_run'] = variable_get('resave_nodes_last_run');
-  $config['use_cron']              = $form_state['values']['use_cron'];
-  $config['unix_cron_settings']    = array(
-    'min'       => $form_state['values']['min'],
-    'hour'      => $form_state['values']['hour'],
-    'day_month' => $form_state['values']['day_month'],
-    'month'     => $form_state['values']['month'],
-    'day_week'  => $form_state['values']['day_week'],
-  );
+  $config['content_types']          = $form_state['values']['content_types'];
+  $config['resave_all_nodes']       = $form_state['values']['resave_all_nodes'];
+  $config['resave_nodes_last_run']  = variable_get('resave_nodes_last_run');
+  $config['use_cron']               = $form_state['values']['use_cron'];
+
+  if ($form_state['values']['use_cron'] == 'run_with_scheduler') {
+    $config['job_scheduler_settings'] = $job;
+    $config['unix_cron_settings']     = array(
+      'min'       => $hard_coded_minutes,
+      'hour'      => $form_state['values']['hour'],
+      'day_month' => $form_state['values']['day_month'],
+      'month'     => $form_state['values']['month'],
+      'day_week'  => $form_state['values']['day_week'],
+    );
+  }
 
   watchdog(
     'resave_nodes',

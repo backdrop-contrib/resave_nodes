@@ -14,9 +14,9 @@ The Resave Nodes module allows for the automatic resaving of nodes.  The
 resaving of nodes can be handled automatically through Drupal's cron
 functionality or it can be managed with a Unix-style cron configuration. The
 nodes that are resaved can be either the ones that have been created or changed
-since the last time the module ran (via one of the two cron options) ran or it
-can be all nodes regardless of created/change date.  It can also be restricted
-to nodes of selected content types.
+since the last time the module ran (via one of the two cron options) or it can
+be all nodes regardless of created/change date.  It can also be restricted to
+nodes of selected content types.
 
 Why do this?  Consider the issue discussed here:
 
@@ -42,6 +42,8 @@ Requirements
 The Job Scheduler module is required.
 https://www.drupal.org/project/job_scheduler
 
+NOTE: this is a new requirement if you are upgrading from a prior version of
+Resave Nodes.
 
 Installation
 ------------
@@ -65,7 +67,7 @@ There are three main configuration options accessible under
 
 Permissions
 -----------
-If someone other than user 1 needs to configured which content types to
+If someone other than user 1 needs to configure which content types to
 monitor, set the "Administer the periodic resaving of nodes via cron"
 permission for that user's role.
 
