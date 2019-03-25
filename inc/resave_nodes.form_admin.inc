@@ -29,15 +29,16 @@ function resave_nodes_form($form, &$form_state) {
     '#title'       => t('Content Selection'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
+    '#description' => t('By default, Resave Nodes is not configured to save
+      anything.  You must first select which content/product types you would
+      like periodically saved.  If you\'d like to resave nodes now, save the
+      configuration first and then click \'Resave Nodes Now.\''),
   );
 
   $form['content']['content_types'] = array(
     '#title'       => t('Content Types'),
     '#type'        => 'checkboxes',
     '#options'     => $content_types,
-    '#description' => t('By default, Resave Nodes is not configured to save
-      anything.  You must first select which content types you would like
-      periodically saved.'),
   );
   if (isset($resave_nodes_selected_types)) {
     $form['content']['content_types']['#default_value'] = $resave_nodes_selected_types;
@@ -168,12 +169,68 @@ function resave_nodes_form($form, &$form_state) {
   );
 
   $form['run_now'] = array(
-    '#type' => 'submit',
-    '#value' => t('Resave Nodes Now'),
-    '#submit' => array('resave_nodes_run_now_submit'),
+    '#type'     => 'submit',
+    '#value'    => t('Resave Nodes Now'),
+    '#validate' => array('resave_nodes_form_validate'),
+    '#submit'   => array('resave_nodes_run_now_submit'),
   );
 
   return $form;
+}
+
+
+/**
+ * Form builder.  Validate values passed in the form.
+ */
+function resave_nodes_form_validate($form, &$form_state) {
+  // Check to verify a proper content type is getting passed in.
+  $types = node_type_get_types();
+  foreach ($form_state['values']['content_types'] as $name => $value) {
+    if (($name == $value) || ($value == 0)) {
+      // Good to go
+    } else {
+      form_set_error('content_types', 'Illegal content type.');
+    }
+
+    $valid_content_type = FALSE;
+    foreach ($types as $type_name => $type_object) {
+      if ($name == $type_name) {
+        $valid_content_type = TRUE;
+        break;
+      }
+    }
+    if ($valid_content_type) {
+      break;
+    } else {
+      form_set_error('content_types', 'Illegal content type.');
+    }
+  }
+
+  // Verify if the 'resave_all_nodes' field has proper data.
+  if (($form_state['values']['resave_all_nodes']['resave_all_nodes'] == 'resave_all_nodes') || ($form_state['values']['resave_all_nodes']['resave_all_nodes'] == 0)) {
+    // Everything's cool.
+  } else {
+    form_set_error('resave_all_nodes', 'Invalid input for \'Resave All Nodes\' field.');
+  }
+
+  // Verify if the 'use_cron' field has proper data.
+  if (($form_state['values']['use_cron'] == 'run_with_cron') || ($form_state['values']['use_cron'] == 'run_with_scheduler')) {
+    // Everything's cool.
+  } else {
+    form_set_error('use_cron', 'Invalid input for \'Resave nodes using...\' field.');
+  }
+
+  // Verify if the Unix time fields have proper data.
+  foreach (array('hour', 'day_month', 'month', 'day_week') as $key => $time_field) {
+    $elements = split(",", $form_state['values'][$time_field]);
+    foreach ($elements as $sub_key => $time_field_value) {
+      if ($time_field_value == '*') {
+        // Everything's cool.
+      } elseif (intval($time_field_value) >= 0) {
+        // Everything's cool.
+      }
+    }
+  }
 }
 
 
