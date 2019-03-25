@@ -1,12 +1,13 @@
 <?php
 /**
  * @file
- * Login include for the Resave Nodes module.
+ * General functions include for the Resave Nodes module.
  *
  * This file has the breakout of the main function that does the node
  * resaving.  This was moved out of the resave_nodes.module file for better
  * organization.
  */
+
 
 /**
  * Submit handler for the 'run now' button on the config page.
