@@ -13,35 +13,62 @@
  * Form builder.  Create and display the Resave Nodes config settings form.
  */
 function resave_nodes_form($form, &$form_state) {
-  $types = node_type_get_types();
-  $content_types = array();
-  foreach ($types as $type) {
-    $content_types[$type->type] = $type->name;
+  $content_types  = array();
+  $product_types  = array();
+  $validate_types = array();
+  $everything     = entity_get_info();
+  foreach ($everything as $type => $data) {
+    if ((array_key_exists('bundles', $data)) && (!empty($data['bundles']))) {
+      if ($type == 'node') {
+        foreach ($data['bundles'] as $type_key => $type_data) {
+          $content_types[$type_key] = $type_data['label'];
+          $validate_types[]         = $type_key;
+        }
+      } elseif ($type == 'commerce_product') {
+        foreach ($data['bundles'] as $type_key => $type_data) {
+          $product_types[$type_key] = $type_data['label'];
+          $validate_types[]         = $type_key;
+        }
+      }
+    }
   }
+  variable_set('resave_nodes_validate_types', $validate_types);
 
-  $resave_nodes_selected_types = variable_get('resave_nodes_selected_types');
-  $resave_nodes_all_nodes      = variable_get('resave_nodes_all_nodes');
-  $resave_nodes_scheduling     = variable_get('resave_nodes_use_cron');
-  $resave_nodes_last_run       = variable_get('resave_nodes_last_run');
+  $resave_nodes_selected_types         = variable_get('resave_nodes_selected_types');
+  $resave_nodes_selected_product_types = variable_get('resave_nodes_selected_product_types');
+  $resave_nodes_all_nodes              = variable_get('resave_nodes_all_nodes');
+  $resave_nodes_scheduling             = variable_get('resave_nodes_use_cron');
+  $resave_nodes_last_run               = variable_get('resave_nodes_last_run');
 
   $form['content'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Content Selection'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
-    '#description' => t('By default, Resave Nodes is not configured to save
-      anything.  You must first select which content/product types you would
-      like periodically saved.  If you\'d like to resave nodes now, save the
+    '#description' => t('Select content/product types you would like
+      periodically saved.  If you\'d like to resave nodes now, save the
       configuration first and then click \'Resave Nodes Now.\''),
   );
 
-  $form['content']['content_types'] = array(
-    '#title'       => t('Content Types'),
-    '#type'        => 'checkboxes',
-    '#options'     => $content_types,
-  );
-  if (isset($resave_nodes_selected_types)) {
-    $form['content']['content_types']['#default_value'] = $resave_nodes_selected_types;
+  if (!empty($content_types)) {
+    $form['content']['content_types'] = array(
+      '#title'       => t('Content Types'),
+      '#type'        => 'checkboxes',
+      '#options'     => $content_types,
+    );
+    if (isset($resave_nodes_selected_types)) {
+      $form['content']['content_types']['#default_value'] = $resave_nodes_selected_types;
+    }
+  }
+  if (!empty($product_types)) {
+    $form['content']['product_types'] = array(
+      '#title'       => t('Commerce Product Types'),
+      '#type'        => 'checkboxes',
+      '#options'     => $product_types,
+    );
+    if (isset($resave_nodes_selected_types)) {
+      $form['content']['product_types']['#default_value'] = $resave_nodes_selected_product_types;
+    }
   }
 
   $form['content']['resave_all_nodes'] = array(
@@ -53,8 +80,8 @@ function resave_nodes_form($form, &$form_state) {
     ),
     '#description' => t('By default, Resave Nodes will only resave nodes
       that have been created/changed since the last time it ran.  Selecting
-      this option will cause all nodes of the selected content types to be
-      resaved regardless of their creation/change times.'),
+      this option will cause all nodes of the selected content/product types to
+      be resaved regardless of their creation/change times.'),
   );
   if (isset($resave_nodes_all_nodes)) {
     $form['content']['resave_all_nodes']['#default_value'] = $resave_nodes_all_nodes;
@@ -172,7 +199,7 @@ function resave_nodes_form($form, &$form_state) {
     '#type'     => 'submit',
     '#value'    => t('Resave Nodes Now'),
     '#validate' => array('resave_nodes_form_validate'),
-    '#submit'   => array('resave_nodes_run_now_submit'),
+    '#submit'   => array('resave_nodes_do_that_thing'),
   );
 
   return $form;
@@ -183,18 +210,18 @@ function resave_nodes_form($form, &$form_state) {
  * Form builder.  Validate values passed in the form.
  */
 function resave_nodes_form_validate($form, &$form_state) {
-  // Check to verify a proper content type is getting passed in.
-  $types = node_type_get_types();
+  $resave_nodes_validate_types = variable_get('resave_nodes_validate_types');
+
+  // Validate the content types that are getting passed in.
   foreach ($form_state['values']['content_types'] as $name => $value) {
     if (($name == $value) || ($value == 0)) {
       // Good to go
     } else {
       form_set_error('content_types', 'Illegal content type.');
     }
-
     $valid_content_type = FALSE;
-    foreach ($types as $type_name => $type_object) {
-      if ($name == $type_name) {
+    foreach ($resave_nodes_validate_types as $valid_name) {
+      if ($name == $valid_name) {
         $valid_content_type = TRUE;
         break;
       }
@@ -203,6 +230,27 @@ function resave_nodes_form_validate($form, &$form_state) {
       break;
     } else {
       form_set_error('content_types', 'Illegal content type.');
+    }
+  }
+
+  // Validate the product types that are getting passed in.
+  foreach ($form_state['values']['product_types'] as $name => $value) {
+    if (($name == $value) || ($value == 0)) {
+      // Good to go
+    } else {
+      form_set_error('product_types', 'Illegal product type.');
+    }
+    $valid_product_type = FALSE;
+    foreach ($resave_nodes_validate_types as $valid_name) {
+      if ($name == $valid_name) {
+        $valid_product_type = TRUE;
+        break;
+      }
+    }
+    if ($valid_product_type) {
+      break;
+    } else {
+      form_set_error('product_types', 'Illegal product type.');
     }
   }
 
@@ -222,7 +270,7 @@ function resave_nodes_form_validate($form, &$form_state) {
 
   // Verify if the Unix time fields have proper data.
   foreach (array('hour', 'day_month', 'month', 'day_week') as $key => $time_field) {
-    $elements = split(",", $form_state['values'][$time_field]);
+    $elements = explode(",", $form_state['values'][$time_field]);
     foreach ($elements as $sub_key => $time_field_value) {
       if ($time_field_value == '*') {
         // Everything's cool.
@@ -239,6 +287,7 @@ function resave_nodes_form_validate($form, &$form_state) {
  */
 function resave_nodes_form_submit($form, &$form_state) {
   variable_set('resave_nodes_selected_types', $form_state['values']['content_types']);
+  variable_set('resave_nodes_selected_product_types', $form_state['values']['product_types']);
   variable_set('resave_nodes_all_nodes', $form_state['values']['resave_all_nodes']);
   variable_set('resave_nodes_use_cron', $form_state['values']['use_cron']);
 
@@ -250,7 +299,7 @@ function resave_nodes_form_submit($form, &$form_state) {
 
   // Create the job data structure to either schedule or delete the job.
   $hard_coded_minutes = variable_get('resave_nodes_unix_cron_min');
-  $crontab = $hard_coded_minutes . ' ' . $form_state['values']['hour'] . ' ' .
+  $crontab            = $hard_coded_minutes . ' ' . $form_state['values']['hour'] . ' ' .
     $form_state['values']['day_month'] . ' ' . $form_state['values']['month'] . ' ' .
     $form_state['values']['day_week'];
 
