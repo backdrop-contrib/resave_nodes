@@ -14,7 +14,7 @@
  */
 function resave_nodes_form($form, &$form_state) {
   $content_types  = array();
-  $product_types  = array();
+  // $product_types  = array();
   $validate_types = array();
   $everything     = entity_get_info();
   foreach ($everything as $type => $data) {
@@ -24,18 +24,18 @@ function resave_nodes_form($form, &$form_state) {
           $content_types[$type_key] = $type_data['label'];
           $validate_types[]         = $type_key;
         }
-      } elseif ($type == 'commerce_product') {
-        foreach ($data['bundles'] as $type_key => $type_data) {
-          $product_types[$type_key] = $type_data['label'];
-          $validate_types[]         = $type_key;
-        }
+      // } elseif ($type == 'commerce_product') {
+      //   foreach ($data['bundles'] as $type_key => $type_data) {
+      //     $product_types[$type_key] = $type_data['label'];
+      //     $validate_types[]         = $type_key;
+      //   }
       }
     }
   }
   variable_set('resave_nodes_validate_types', $validate_types);
 
-  $resave_nodes_selected_types         = variable_get('resave_nodes_selected_types');
-  $resave_nodes_selected_product_types = variable_get('resave_nodes_selected_product_types');
+  $resave_nodes_selected_types         = variable_get('resave_nodes_selected_types', array());
+  // $resave_nodes_selected_product_types = variable_get('resave_nodes_selected_product_types', array());
   $resave_nodes_all_nodes              = variable_get('resave_nodes_all_nodes');
   $resave_nodes_scheduling             = variable_get('resave_nodes_use_cron');
   $resave_nodes_last_run               = variable_get('resave_nodes_last_run');
@@ -60,16 +60,16 @@ function resave_nodes_form($form, &$form_state) {
       $form['content']['content_types']['#default_value'] = $resave_nodes_selected_types;
     }
   }
-  if (!empty($product_types)) {
-    $form['content']['product_types'] = array(
-      '#title'       => t('Commerce Product Types'),
-      '#type'        => 'checkboxes',
-      '#options'     => $product_types,
-    );
-    if (isset($resave_nodes_selected_types)) {
-      $form['content']['product_types']['#default_value'] = $resave_nodes_selected_product_types;
-    }
-  }
+  // if (!empty($product_types)) {
+  //   $form['content']['product_types'] = array(
+  //     '#title'       => t('Commerce Product Types'),
+  //     '#type'        => 'checkboxes',
+  //     '#options'     => $product_types,
+  //   );
+  //   if (isset($resave_nodes_selected_types)) {
+  //     $form['content']['product_types']['#default_value'] = $resave_nodes_selected_product_types;
+  //   }
+  // }
 
   $form['content']['resave_all_nodes'] = array(
     '#title'         => t('Resave All Nodes'),
@@ -233,26 +233,26 @@ function resave_nodes_form_validate($form, &$form_state) {
     }
   }
 
-  // Validate the product types that are getting passed in.
-  foreach ($form_state['values']['product_types'] as $name => $value) {
-    if (($name == $value) || ($value == 0)) {
-      // Good to go
-    } else {
-      form_set_error('product_types', 'Illegal product type.');
-    }
-    $valid_product_type = FALSE;
-    foreach ($resave_nodes_validate_types as $valid_name) {
-      if ($name == $valid_name) {
-        $valid_product_type = TRUE;
-        break;
-      }
-    }
-    if ($valid_product_type) {
-      break;
-    } else {
-      form_set_error('product_types', 'Illegal product type.');
-    }
-  }
+  // // Validate the product types that are getting passed in.
+  // foreach ($form_state['values']['product_types'] as $name => $value) {
+  //   if (($name == $value) || ($value == 0)) {
+  //     // Good to go
+  //   } else {
+  //     form_set_error('product_types', 'Illegal product type.');
+  //   }
+  //   $valid_product_type = FALSE;
+  //   foreach ($resave_nodes_validate_types as $valid_name) {
+  //     if ($name == $valid_name) {
+  //       $valid_product_type = TRUE;
+  //       break;
+  //     }
+  //   }
+  //   if ($valid_product_type) {
+  //     break;
+  //   } else {
+  //     form_set_error('product_types', 'Illegal product type.');
+  //   }
+  // }
 
   // Verify if the 'resave_all_nodes' field has proper data.
   if (($form_state['values']['resave_all_nodes']['resave_all_nodes'] == 'resave_all_nodes') || ($form_state['values']['resave_all_nodes']['resave_all_nodes'] == 0)) {
@@ -287,7 +287,7 @@ function resave_nodes_form_validate($form, &$form_state) {
  */
 function resave_nodes_form_submit($form, &$form_state) {
   variable_set('resave_nodes_selected_types', $form_state['values']['content_types']);
-  variable_set('resave_nodes_selected_product_types', $form_state['values']['product_types']);
+  // variable_set('resave_nodes_selected_product_types', $form_state['values']['product_types']);
   variable_set('resave_nodes_all_nodes', $form_state['values']['resave_all_nodes']);
   variable_set('resave_nodes_use_cron', $form_state['values']['use_cron']);
 
