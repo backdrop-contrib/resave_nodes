@@ -1,0 +1,14 @@
+{
+    "_config_name": "resave_nodes.settings",
+    "resave_nodes_selected_types": "dynamic value in file /resave_nodes/inc/resave_nodes.func_general.inc line 14",
+    "resave_nodes_all_nodes": "novalue",
+    "resave_nodes_use_cron": "novalue",
+    "resave_nodes_last_run": "novalue",
+    "resave_nodes_unix_cron_min": "novalue",
+    "resave_nodes_unix_cron_hour": "novalue",
+    "resave_nodes_unix_cron_day_month": "novalue",
+    "resave_nodes_unix_cron_month": "novalue",
+    "resave_nodes_unix_cron_day_week": "novalue",
+    "resave_nodes_validate_types": "novalue",
+    "resave_nodes_unix_cron_job_id": "novalue"
+}

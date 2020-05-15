@@ -10,23 +10,25 @@
 function resave_nodes_install() {
   // Setting this variable prevents this module from attempting to resave all
   // nodes the first time it's run.
-  variable_set('resave_nodes_last_run', time());
+  config_set('resave_nodes.settings', 'resave_nodes_last_run', time());
 
   // Setting this variable makes this module use cron to resave the nodes.
-  variable_set('resave_nodes_use_cron', 'run_with_cron');
+  config_set('resave_nodes.settings', 'resave_nodes_use_cron', 'run_with_cron');
 
   // The following settings are defaults for the 'Unix-style cron' scheduling
   // option.  They only take effect when 'Unix-style cron' scheduling is
   // selected on the configuration page.
   // This default is for once a day at midnight.
-  variable_set('resave_nodes_unix_cron_min', '*');
-  variable_set('resave_nodes_unix_cron_hour', '0');
-  variable_set('resave_nodes_unix_cron_day_month', '*');
-  variable_set('resave_nodes_unix_cron_month', '*');
-  variable_set('resave_nodes_unix_cron_day_week', '*');
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_min', '*');
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_hour', '0');
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_day_month', '*');
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_month', '*');
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_day_week', '*');
 
   // Job Scheduler job ID for 'Unix-style cron' scheduling.
-  variable_set('resave_nodes_unix_cron_job_id', 71477);
+  config_set('resave_nodes.settings', 'resave_nodes_unix_cron_job_id', 71477);
+  // Dynamically generated variable data was detected on the following lines.
+  // /resave_nodes/inc/resave_nodes.func_general.inc line 14
 }
 
 
@@ -34,38 +36,68 @@ function resave_nodes_install() {
  * Implements hook_uninstall().
  */
 function resave_nodes_uninstall() {
+  $config = config('resave_nodes.settings');
   // If we're uninstalling while the 'Unix-style cron' configuration is in
   // use, then let's make sure we completely clean up after ourselves.
-  if (variable_get('resave_nodes_use_cron') == 'run_with_scheduler') {
-    $min       = variable_get('resave_nodes_unix_cron_min');
-    $hour      = variable_get('resave_nodes_unix_cron_hour');
-    $day_month = variable_get('resave_nodes_unix_cron_day_month');
-    $month     = variable_get('resave_nodes_unix_cron_month');
-    $day_week  = variable_get('resave_nodes_unix_cron_day_week');
+  if ($config->get('resave_nodes_use_cron') == 'run_with_scheduler') {
+    $min       = $config->get('resave_nodes_unix_cron_min');
+    $hour      = $config->get('resave_nodes_unix_cron_hour');
+    $day_month = $config->get('resave_nodes_unix_cron_day_month');
+    $month     = $config->get('resave_nodes_unix_cron_month');
+    $day_week  = $config->get('resave_nodes_unix_cron_day_week');
     $crontab = $min . ' ' . $hour . ' ' . $day_month . ' ' . $month . ' ' . $day_week;
 
     $job = array(
-      'type'     => 'resave_nodes',
-      'id'       => variable_get('resave_nodes_unix_cron_job_id'),
+      'type' => 'resave_nodes',
+      'id' => $config->get('resave_nodes_unix_cron_job_id'),
       'periodic' => TRUE,
-      'crontab'  => $crontab,
+      'crontab' => $crontab,
     );
     JobScheduler::get('resave_nodes_do_that_thing')->remove($job);
   }
 
   // Now get on with deleting everything else.
-  variable_del('resave_nodes_unix_cron_min');
-  variable_del('resave_nodes_unix_cron_hour');
-  variable_del('resave_nodes_unix_cron_day_month');
-  variable_del('resave_nodes_unix_cron_month');
-  variable_del('resave_nodes_unix_cron_day_week');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_min');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_hour');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_day_month');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_month');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_day_week');
 
-  variable_del('resave_nodes_unix_cron_job_id');
+  config_clear('resave_nodes.settings', 'resave_nodes_unix_cron_job_id');
 
-  variable_del('resave_nodes_selected_types');
+  config_clear('resave_nodes.settings', 'resave_nodes_selected_types');
   // variable_del('resave_nodes_selected_product_types');
-  variable_del('resave_nodes_validate_types');
-  variable_del('resave_nodes_all_nodes');
-  variable_del('resave_nodes_use_cron');
-  variable_del('resave_nodes_last_run');
+  config_clear('resave_nodes.settings', 'resave_nodes_validate_types');
+  config_clear('resave_nodes.settings', 'resave_nodes_all_nodes');
+  config_clear('resave_nodes.settings', 'resave_nodes_use_cron');
+  config_clear('resave_nodes.settings', 'resave_nodes_last_run');
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function resave_nodes_update_1000() {
+  $config = config('resave_nodes.settings');
+  $config->set('resave_nodes_selected_types', update_variable_get('resave_nodes_selected_types', 'dynamic value in file /resave_nodes/inc/resave_nodes.func_general.inc line 14'));
+  $config->set('resave_nodes_all_nodes', update_variable_get('resave_nodes_all_nodes', 'novalue'));
+  $config->set('resave_nodes_use_cron', update_variable_get('resave_nodes_use_cron', 'novalue'));
+  $config->set('resave_nodes_last_run', update_variable_get('resave_nodes_last_run', 'novalue'));
+  $config->set('resave_nodes_unix_cron_min', update_variable_get('resave_nodes_unix_cron_min', 'novalue'));
+  $config->set('resave_nodes_unix_cron_hour', update_variable_get('resave_nodes_unix_cron_hour', 'novalue'));
+  $config->set('resave_nodes_unix_cron_day_month', update_variable_get('resave_nodes_unix_cron_day_month', 'novalue'));
+  $config->set('resave_nodes_unix_cron_month', update_variable_get('resave_nodes_unix_cron_month', 'novalue'));
+  $config->set('resave_nodes_unix_cron_day_week', update_variable_get('resave_nodes_unix_cron_day_week', 'novalue'));
+  $config->set('resave_nodes_validate_types', update_variable_get('resave_nodes_validate_types', 'novalue'));
+  $config->set('resave_nodes_unix_cron_job_id', update_variable_get('resave_nodes_unix_cron_job_id', 'novalue'));
+  update_variable_del('resave_nodes_selected_types');
+  update_variable_del('resave_nodes_all_nodes');
+  update_variable_del('resave_nodes_use_cron');
+  update_variable_del('resave_nodes_last_run');
+  update_variable_del('resave_nodes_unix_cron_min');
+  update_variable_del('resave_nodes_unix_cron_hour');
+  update_variable_del('resave_nodes_unix_cron_day_month');
+  update_variable_del('resave_nodes_unix_cron_month');
+  update_variable_del('resave_nodes_unix_cron_day_week');
+  update_variable_del('resave_nodes_validate_types');
+  update_variable_del('resave_nodes_unix_cron_job_id');
 }

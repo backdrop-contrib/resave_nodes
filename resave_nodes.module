@@ -10,8 +10,8 @@
  * (geolocation, media players, etc.).
  */
 
-require_once drupal_get_path('module', 'resave_nodes') . '/inc/resave_nodes.form_admin.inc';
-require_once drupal_get_path('module', 'resave_nodes') . '/inc/resave_nodes.func_general.inc';
+require_once backdrop_get_path('module', 'resave_nodes') . '/inc/resave_nodes.form_admin.inc';
+require_once backdrop_get_path('module', 'resave_nodes') . '/inc/resave_nodes.func_general.inc';
 
 
 /**
@@ -21,7 +21,7 @@ function resave_nodes_help($path, $arg) {
   if ($path == 'admin/help#resave_nodes') {
     return t('<p>The Resave Nodes module allows for the automatic resaving of
       nodes.  The resaving of nodes can be handled automatically through
-      Drupal\'s cron functionality or it can be managed with a Unix-style cron
+      Backdrop\'s cron functionality or it can be managed with a Unix-style cron
       configuration. The nodes that are resaved can be either the ones that have
       been created or changed since the last time the module ran (via one of the
       two cron options) or it can be all nodes regardless of created/change
@@ -37,12 +37,12 @@ function resave_nodes_help($path, $arg) {
  */
 function resave_nodes_menu() {
   $items['admin/config/system/resave_nodes'] = array(
-    'title'            => 'Resave Nodes',
-    'description'      => t('Configure the content types and frequency for resaving nodes.'),
-    'page callback'    => 'drupal_get_form',
-    'page arguments'   => array('resave_nodes_form'),
+    'title' => 'Resave Nodes',
+    'description' => t('Configure the content types and frequency for resaving nodes.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('resave_nodes_form'),
     'access arguments' => array('administer node resaving'),
-    'type'             => MENU_NORMAL_ITEM,
+    'type' => MENU_NORMAL_ITEM,
   );
   return $items;
 }
@@ -61,10 +61,20 @@ function resave_nodes_permission() {
 
 
 /**
+ * Implements hook_config_info().
+ */
+function resave_nodes_config_info() {
+  $prefixes['resave_nodes.settings'] = array(
+    'label' => t('Module name settings'),
+    'group' => t('Configuration'),
+  );
+}
+
+/**
  * Implements hook_cron().
  */
 function resave_nodes_cron() {
-  $resave_nodes_scheduling = variable_get('resave_nodes_use_cron');
+  $resave_nodes_scheduling = config_get('resave_nodes.settings', 'resave_nodes_use_cron');
 
   if ($resave_nodes_scheduling == 'run_with_cron') {
     resave_nodes_do_that_thing();
