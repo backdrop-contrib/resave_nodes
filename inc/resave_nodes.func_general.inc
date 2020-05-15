@@ -11,37 +11,37 @@
 
 /**
  * @todo Please document this function.
- * @see http://drupal.org/node/1354
  */
-function resave_nodes_do_that_thing($form, &$form_state) {
+function resave_nodes_do_that_thing($form = array(), &$form_state = array()) {
   $config = config('resave_nodes.settings');
-  $resave_nodes_last_run               = $config->get('resave_nodes_last_run');
-  $resave_nodes_selected_content_types = $config->get('resave_nodes_selected_types');
-  // $resave_nodes_selected_product_types = variable_get('resave_nodes_selected_product_types', array());
-  $resave_nodes_all_nodes              = $config->get('resave_nodes_all_nodes');
+  $last_run               = $config->get('last_run');
 
   $batch = FALSE;
   if ((isset($form_state['clicked_button']['#value'])) && ($form_state['clicked_button']['#value'] == 'Resave Nodes Now')) {
+    // Run immediately (and form selections may have changed).
     $batch = TRUE;
+    resave_nodes_form_validate($form, $form_state);
+    resave_nodes_form_submit($form, $form_state);
+    $selected_content_types = $form_state['values']['content_types'];
+    $all_nodes              = $form_state['values']['resave_all_nodes'];
+  } else {
+    // Running during cron so load selections from config.
+    $selected_content_types = $config->get('selected_types');
+    $all_nodes              = $config->get('all_nodes');
   }
-
-  // $merged_types = array_merge($resave_nodes_selected_content_types, $resave_nodes_selected_product_types);
-
   $start_time = time();
   $operations = array();
 
   $total_num_nodes_saved = 0;
-  // if (!empty($merged_types)) {
-//   foreach ($merged_types as $type => $value) {
-  if (!empty($resave_nodes_selected_content_types)) {
-    foreach ($resave_nodes_selected_content_types as $type => $value) {
+  if (!empty($selected_content_types)) {
+    foreach ($selected_content_types as $type => $value) {
       if ($type === $value) {
         // Check the node table first.
         // Default action: resave only recently created/changed.
-        if ($resave_nodes_all_nodes['resave_all_nodes'] == '0') {
+        if ($all_nodes['resave_all_nodes'] == '0') {
           $query = db_query('SELECT nid FROM {node} WHERE changed >= :last_cron_run AND type = :content_type',
             array(
-            ":last_cron_run" => $resave_nodes_last_run,
+            ":last_cron_run" => $last_run,
             ":content_type" => $value,
           )
           );
@@ -67,37 +67,6 @@ function resave_nodes_do_that_thing($form, &$form_state) {
             $total_num_nodes_saved += $num_nodes_saved;
           }
         }
-
-        // // Repeat the process for the commerce_product table (if installed).
-        // if ((module_exists('commerce_product')) && ($num_nodes_saved == 0)) {
-//   if ($resave_nodes_all_nodes['resave_all_nodes'] == '0') {
-//     $query = db_query('SELECT product_id FROM {commerce_product} WHERE changed >= :last_cron_run AND type = :content_type',
-//       array(
-//         ":last_cron_run" => $resave_nodes_last_run,
-//         ":content_type"  => $value,
-//       )
-//     );
-//   // Resave everything for specified product type.
-//   } else {
-//     $query = db_query('SELECT product_id FROM {commerce_product} WHERE type = :content_type',
-//       array(
-//         ":content_type"  => $value,
-//       )
-//     );
-//   }
-//   $num_nodes_saved = 0;
-//   foreach ($query as $result) {
-//     if ($batch) {
-//       $operations[] = array(
-//         'resave_nodes_save_it',
-//         array($result->product_id, 'commerce_product', TRUE),
-//       );
-//     } else {
-//       $num_nodes_saved       += resave_nodes_save_it($result->product_id, 'commerce_product', $batch);
-//       $total_num_nodes_saved += $num_nodes_saved;
-//     }
-//   }
-        // }
       }
     }
   }
@@ -129,7 +98,7 @@ function resave_nodes_do_that_thing($form, &$form_state) {
     ),
       WATCHDOG_INFO
     );
-    config_set('resave_nodes.settings', 'resave_nodes_last_run', $start_time + $time_delta);
+    config_set('resave_nodes.settings', 'last_run', $start_time + $time_delta);
 
     return array(
       'number_updated' => $total_num_nodes_saved,
@@ -140,7 +109,6 @@ function resave_nodes_do_that_thing($form, &$form_state) {
 
 /**
  * @todo Please document this function.
- * @see http://drupal.org/node/1354
  */
 function resave_nodes_save_it($id, $bundle_type, $batch = FALSE, &$context = array()) {
   $num_saved = 0;
@@ -154,11 +122,6 @@ function resave_nodes_save_it($id, $bundle_type, $batch = FALSE, &$context = arr
         $title = $node->title;
         $type  = $node->type;
         node_save($node);
-        // } elseif ($bundle_type == 'commerce_product') {
-//   $product = commerce_product_load($id);
-//   $title = $product->title;
-//   $type  = $product->type;
-//   commerce_product_save($product);
       }
       $num_saved++;
 
@@ -193,7 +156,6 @@ function resave_nodes_save_it($id, $bundle_type, $batch = FALSE, &$context = arr
 
 /**
  * @todo Please document this function.
- * @see http://drupal.org/node/1354
  */
 function resave_nodes_batch_finished($success, $results, $operations) {
   if ($success) {
@@ -207,7 +169,6 @@ function resave_nodes_batch_finished($success, $results, $operations) {
         $products++;
       }
     }
-    // backdrop_set_message(t('Resaved @nodes nodes and @products products for @total total resaved content.',
     backdrop_set_message(t('Resaved @nodes nodes.',
       array(
       '@nodes' => $nodes,
@@ -217,12 +178,9 @@ function resave_nodes_batch_finished($success, $results, $operations) {
     ));
     watchdog(
       'resave_nodes',
-      // 'Resaved @nodes nodes and @products products for @total total resaved content: <pre>@results</pre>',
       'Resaved @nodes nodes : <pre>@results</pre>',
       array(
       '@nodes' => $nodes,
-      // '@products' => $products,
-      // '@total'    => count($results),
       '@results' => print_r($results, TRUE),
     ),
       WATCHDOG_INFO

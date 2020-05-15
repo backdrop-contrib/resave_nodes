@@ -2,9 +2,8 @@
 
 The Resave Nodes module allows for the automatic resaving of nodes.  The
 resaving of nodes can be handled automatically through Backdrop's cron
-functionality or it can be managed with a Unix-style cron configuration. The
-nodes that are resaved can be either the ones that have been created or changed
-since the last time the module ran (via one of the two cron options) or it can
+functionality. The nodes that are resaved can be either the ones that have been
+created or changed since the last time the module ran (via cron) or it can
 be all nodes regardless of created/change date.  It can also be restricted to
 nodes of selected content types.
 
@@ -20,13 +19,10 @@ save nodes is not a realistic option.  Enter this module.
 
 Upon installation, configure the desired content types to monitor and
 whether or not to do only those nodes that have been recently
-created/changed. Then, select the preferred cron option (via Backdrop or using
-the Job Scheduler module).  The next time cron is run, nodes of that content
-type will be resaved, forcing the computing of that special field.
-
-## Requirements
-
- - Job Scheduler
+created/changed. Then, select the cron option and the next time cron is run, 
+nodes of that content type will be resaved, forcing the computing of that 
+special field. You can also use the "Resave Nodes Now" button to do it
+immediately.
 
 ## Installation
 
@@ -41,8 +37,7 @@ There are three main configuration options accessible under
 - Content type(s) to limit which nodes are resaved.
 - Whether to go with the default "resave only created/changed nodes" or to
   resave all nodes regardless of created/changed time.
-- Schedule the resaving of nodes via Backdrop's cron utility or with the
-  Unix-style crontab available from the Job Scheduler.
+- Schedule the resaving of nodes via Backdrop's cron utility.
 
 More details may be found (or added) in the [Wiki](https://github.com/backdrop-contrib/resave_nodes/wiki)
 

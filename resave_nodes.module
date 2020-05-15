@@ -5,32 +5,13 @@
  *
  * This module will resave nodes of selected content types based on various
  * rules (created/updated since last time cron was run, or just all nodes
- * regardless of create/update time) at configured times (via cron or
- * multiple times of day).  This will force computed fields to be computed
+ * regardless of create/update time) at configured times (via cron).
+ * This will force computed fields to be computed
  * (geolocation, media players, etc.).
  */
 
 require_once backdrop_get_path('module', 'resave_nodes') . '/inc/resave_nodes.form_admin.inc';
 require_once backdrop_get_path('module', 'resave_nodes') . '/inc/resave_nodes.func_general.inc';
-
-
-/**
- * Implements hook_help().
- */
-function resave_nodes_help($path, $arg) {
-  if ($path == 'admin/help#resave_nodes') {
-    return t('<p>The Resave Nodes module allows for the automatic resaving of
-      nodes.  The resaving of nodes can be handled automatically through
-      Backdrop\'s cron functionality or it can be managed with a Unix-style cron
-      configuration. The nodes that are resaved can be either the ones that have
-      been created or changed since the last time the module ran (via one of the
-      two cron options) or it can be all nodes regardless of created/change
-      date.  It can also be restricted to nodes of selected content types.</p>
-      <p>If the Unix-style cron is required, be sure to set cron to run every
-      1 hour under \'Configuration > System > Cron\'.</p>');
-  }
-}
-
 
 /**
  * Implements hook_menu().
@@ -47,7 +28,6 @@ function resave_nodes_menu() {
   return $items;
 }
 
-
 /**
  * Implements hook_permission().
  */
@@ -58,7 +38,6 @@ function resave_nodes_permission() {
     ),
   );
 }
-
 
 /**
  * Implements hook_config_info().
@@ -74,21 +53,9 @@ function resave_nodes_config_info() {
  * Implements hook_cron().
  */
 function resave_nodes_cron() {
-  $resave_nodes_scheduling = config_get('resave_nodes.settings', 'resave_nodes_use_cron');
+  $resave_nodes_scheduling = config_get('resave_nodes.settings', 'use_cron');
 
   if ($resave_nodes_scheduling == 'run_with_cron') {
     resave_nodes_do_that_thing();
   }
-}
-
-
-/**
- * Implements hook_cron_job_scheduler_info().
- */
-function resave_nodes_cron_job_scheduler_info() {
-  $info = array();
-  $info['resave_nodes_do_that_thing'] = array(
-    'worker callback' => 'resave_nodes_do_that_thing',
-  );
-  return $info;
 }
