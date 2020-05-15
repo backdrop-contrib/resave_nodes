@@ -1,26 +1,14 @@
-CONTENTS OF THIS FILE
----------------------
-* Introduction
-* Requirements
-* Installation
-* Configuration
-* Permissions
-* Maintainers
+# Resave Nodes
 
-
-Introduction
-------------
 The Resave Nodes module allows for the automatic resaving of nodes.  The
-resaving of nodes can be handled automatically through Drupal's cron
+resaving of nodes can be handled automatically through Backdrop's cron
 functionality or it can be managed with a Unix-style cron configuration. The
 nodes that are resaved can be either the ones that have been created or changed
 since the last time the module ran (via one of the two cron options) or it can
 be all nodes regardless of created/change date.  It can also be restricted to
 nodes of selected content types.
 
-Why do this?  Consider the issue discussed here:
-
-https://www.drupal.org/node/2001446
+Why do this?
 
 In certain situations, importing nodes with geolocation information doesn't
 always cause the geolookup to occur.  Resaving the node by hand triggers
@@ -32,47 +20,52 @@ save nodes is not a realistic option.  Enter this module.
 
 Upon installation, configure the desired content types to monitor and
 whether or not to do only those nodes that have been recently
-created/changed.  Then, select the preferred cron option (via Drupal or using
+created/changed. Then, select the preferred cron option (via Backdrop or using
 the Job Scheduler module).  The next time cron is run, nodes of that content
 type will be resaved, forcing the computing of that special field.
 
+## Requirements
 
-Requirements
-------------
-The Job Scheduler module is required.
-https://www.drupal.org/project/job_scheduler
+ - Job Scheduler
 
-NOTE: this is a new requirement if you are upgrading from a prior version of
-Resave Nodes.
+## Installation
 
-Installation
-------------
-Install as you would normally install a contributed drupal module. See:
-https://drupal.org/documentation/install/modules-themes/modules-7
-for further information.
+- Install this module using the [official Backdrop CMS instructions](https://backdropcms.org/guide/modules).
 
+## Configuration and Usage
 
-Configuration
--------------
 There are three main configuration options accessible under
 'Configuration > System > Resave Nodes' or by going to
 /admin/config/system/resave_nodes:
 
-* Content type(s) to limit which nodes are resaved.
-* Whether to go with the default "resave only created/changed nodes" or to
+- Content type(s) to limit which nodes are resaved.
+- Whether to go with the default "resave only created/changed nodes" or to
   resave all nodes regardless of created/changed time.
-* Schedule the resaving of nodes via Drupal's cron utility or with the
+- Schedule the resaving of nodes via Backdrop's cron utility or with the
   Unix-style crontab available from the Job Scheduler.
 
+More details may be found (or added) in the [Wiki](https://github.com/backdrop-contrib/resave_nodes/wiki)
 
-Permissions
------------
+## Permissions
+
 If someone other than user 1 needs to configure which content types to
 monitor, set the "Administer the periodic resaving of nodes via cron"
 permission for that user's role.
 
+## Issues
 
-MAINTAINERS
------------
-Current maintainers:
-* Adam Fuller (dasfuller) - https://drupal.org/user/2731951
+Bugs and Feature requests should be reported in the [Issue Queue](https://github.com/backdrop-contrib/jitsi/issues)
+
+## Current Maintainers
+
+- [Laryn Kragt Bakker](https://github.com/laryn), [CEDC.org](https://CEDC.org)
+- Collaboration and co-maintainers welcome!
+
+## Credits
+
+- Created for Drupal by [Adam Fuller (dasfuller)](https://drupal.org/user/2731951)
+
+## License
+
+This project is GPL-2.0 (or later) software. See the LICENSE.txt file in this
+directory for complete text.
