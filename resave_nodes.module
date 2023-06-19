@@ -44,9 +44,10 @@ function resave_nodes_permission() {
  */
 function resave_nodes_config_info() {
   $prefixes['resave_nodes.settings'] = array(
-    'label' => t('Module name settings'),
+    'label' => t('Resave Nodes settings'),
     'group' => t('Configuration'),
   );
+  return $prefixes;
 }
 
 /**
